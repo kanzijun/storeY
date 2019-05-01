@@ -117,15 +117,29 @@ def edit_story(title):
 	cursor.execute("SELECT ip_addr FROM ip  WHERE title = %s and ip_addr > %s ORDER BY ip_addr LIMIT 1;", (title, current_user))
 	valid_user = cursor.fetchone()
 
-	if user_ip != valid_user:
-		data = { "Error": "It is not your turn." }
-		resp = Response(json.dumps(data), status=200, mimetype='application/json')
-		return resp
+	if user_ip == valid_user:
 
+		if request.headers['Content-Type'] == 'application/json':
+			arguments = request.get_json()
+			new_text = arguments.get("new_text")
 
+			if check_grammar_bot(new_text)==True:
 
+				db = MySQLdb.connect("mysql-server", "root", "secret", "mydb")
+				cursor = db.cursor()
+				cursor.execute("SELECT text FROM stories WHERE title = %s;", (title,))
+				old_text = cursor.fetchone()
+				updated_text = old_text + new_text
+				cursor.execute("UPDATE stories SET text = %s WHERE title = %s;", (updated_text, title))
+				db.commit()
+				db.close()
 
+				resp = Response(status=204, mimetype='application/json')
+				return resp
 
+	data = { "Error": "It is not your turn." }
+	resp = Response(json.dumps(data), status=200, mimetype='application/json')
+	return resp
 
 
 @app.route('/story/<title>/end', methods=["DELETE"])
