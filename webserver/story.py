@@ -15,25 +15,26 @@ def start_story():
 		current_user = arguments.get("current_user")
 		state = arguments.get("state")
 
-	db = MySQLdb.connect("mysql-server", "root", "secret", "mydb")
-	cursor = db.cursor()
-	cursor.execute("INSERT INTO stories VALUES (title, text, current_user, state);")
-	db.commit()
-	db.close()
-		
-	resp = Response(json.dumps({ "title": title }), status=201, mimetype='application/json')
+		if check_grammar_bot(text)==True:
+			open_database()
+			cursor.execute("INSERT INTO stories VALUES (title, text, current_user, state);")
+			cursor.execute("INSERT INTO users VALUES (title, user);")
+			db.commit()
+			db.close()
+
+			resp = Response(json.dumps({ "title": title }), status=201, mimetype='application/json')
+			return resp
+
+	resp = Response(json.dumps({ "Error in content." }), status=201, mimetype='application/json')
 	return resp
 	
 
 @app.route('/story/list', methods=["GET"])
 def list_stories_titles():
-	resp = Response(json.dumps(df['title'].to_dict()), status=200, mimetype='application/json')
-	return resp
 
 	stories = []
 
-	db = MySQLdb.connect("mysql-server", "root", "secret", "mydb")
-	cursor = db.cursor()
+	open_database()
 	cursor.execute("SELECT * FROM stories")
 	rows = cursor.fetchall()
 	for row in rows:
@@ -48,22 +49,19 @@ def list_stories_titles():
 @app.route('/story/<title>', methods=["GET"])
 def display_story(title):
 	
-	try:
-		db = MySQLdb.connect("mysql-server", "root", "secret", "mydb")
-		cursor = db.cursor()
-		cursor.execute("SELECT * FROM stories WHERE title = %s", (title))
-		rows = cursor.fetchone()
-		if (rows != None):
+
+	open_database()
+	cursor.execute("SELECT * FROM stories WHERE title = %s", (title))
+	rows = cursor.fetchone()
+	if (rows != None):
 		data = {"title": rows[0], "text": rows[1], "current_user": rows[2], "state": rows[3]}
 		db.close()
-
 		resp = Response(json.dumps(data), status=200, mimetype='application/json')
 		return resp
 
-	except KeyError:
-		data = { "error": "There is no story with that title." }
-		resp = Response(json.dumps(data), status=404, mimetype='application/json')
-		return resp
+	data = { "Error": "There is no story with that title." }
+	resp = Response(json.dumps(data), status=404, mimetype='application/json')
+	return resp
 
 
 # @app.route('story/<title>/edit')
@@ -71,3 +69,7 @@ def display_story(title):
 # @app.route('story/<title>/end')
 
 # @app.route('story/<title>/leave')
+
+def open_database(self):
+	db = MySQLdb.connect("mysql-server", "root", "secret", "mydb")
+	cursor = db.cursor()
