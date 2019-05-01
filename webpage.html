@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>storey</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  /*font-family: Courier New, Courier, monospace;*/
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Style the header */
+header {
+  font-family: Arial, Helvetica, sans-serif;
+  background-color: #ffffff;
+  padding: 3px;
+  text-align: center;
+  font-size: 35px;
+  color: grey;
+
+}
+
+/* Container for flexboxes */
+section {
+  display: -webkit-flex;
+  display: flex;
+}
+
+/* Style the navigation menu */
+nav {
+  -webkit-flex: 0.5;
+  -ms-flex: 1;
+  flex: 0.5;
+  background: #f1f1f1;
+  padding: 20px;
+}
+
+/* Style the list inside the menu */
+nav ul {
+  font-family: Arial, Helvetica, sans-serif;
+  list-style-type: none;
+  padding: 0;
+}
+
+/* Style the content */
+article {
+  -webkit-flex: 3;
+  -ms-flex: 3;
+  flex: 3;
+  background-color: #ffffff;
+  padding: 15px;
+  padding-left: 50px;
+}
+
+/* Style the footer */
+footer {
+  background-color: #ffffff;
+  padding: 10px;
+  text-align: center;
+  color: gray;
+}
+
+/* Responsive layout - makes the menu and the content (inside the section) sit on top of each other instead of next to each other */
+@media (max-width: 600px) {
+  section {
+    -webkit-flex-direction: column;
+    flex-direction: column;
+  }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <img src="logo.png" alt="logo" />
+  <style>  
+    img { 
+        max-width:25%; 
+        height:auto; 
+    } 
+  </style>  
+</header>
+
+
+
+<section>
+  <nav>
+    <h1>The Library</h1>
+    <ul>
+      <li><a href="#">The Big City London</a></li>
+      <li><a href="#">Little Dog</a></li>
+      <li><a href="#">Ouija Story</a></li>
+
+    </ul>
+    <button type="button">Add new</button>
+    <style>
+    h1 {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 18px;
+      color: #b89f57;
+    }
+    a {
+    color: black;
+    }
+    nav {
+    border-right: 5px solid #b89f57;
+    }
+
+    </style>
+  </nav>
+  
+  <article>
+    <h2>The Big City London</h2>
+    <p>London is the capital city of England. It is the most populous city in the  United Kingdom, with a metropolitan area of over 13 million inhabitants.</p>
+    <p>Standing on the River Thames, London has been a major settlement for two millennia, its history going back to its founding by the Romans, who named it Londinium.</p>
+  </article>
+</section>
+
+<footer>
+  <p>Enter your text here!</p>
+  <textarea name="paragraph_text" cols="50" rows="10"></textarea>
+  <p>
+  <button type="button">Submit text</button>
+  <button type="button">Delete story</button>
+  <button type="button">Enter story</button>
+  </p>
+</footer>
+
+</body>
+</html>
