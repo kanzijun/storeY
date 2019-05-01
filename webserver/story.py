@@ -1,6 +1,6 @@
 from flask import Flask, request, Response
 import json
-
+from grammarbot import GrammarBotClient
 import MySQLdb
 
 app = Flask(__name__)
@@ -16,7 +16,8 @@ def start_story():
 		state = arguments.get("state")
 
 		if check_grammar_bot(text)==True:
-			open_database()
+			db = MySQLdb.connect("mysql-server", "root", "secret", "mydb")
+			cursor = db.cursor()
 			cursor.execute("INSERT INTO stories VALUES (title, text, current_user, state);")
 			cursor.execute("INSERT INTO users VALUES (title, user);")
 			db.commit()
@@ -34,7 +35,8 @@ def list_stories_titles():
 
 	stories = []
 
-	open_database()
+	db = MySQLdb.connect("mysql-server", "root", "secret", "mydb")
+	cursor = db.cursor()
 	cursor.execute("SELECT * FROM stories")
 	rows = cursor.fetchall()
 	for row in rows:
@@ -50,7 +52,8 @@ def list_stories_titles():
 def display_story(title):
 	
 
-	open_database()
+	db = MySQLdb.connect("mysql-server", "root", "secret", "mydb")
+	cursor = db.cursor()
 	cursor.execute("SELECT * FROM stories WHERE title = %s", (title))
 	rows = cursor.fetchone()
 	if (rows != None):
@@ -64,12 +67,25 @@ def display_story(title):
 	return resp
 
 
-# @app.route('story/<title>/edit')
+# @app.route('/story/<title>/edit')
 
-# @app.route('story/<title>/end')
-
-# @app.route('story/<title>/leave')
-
-def open_database(self):
+@app.route('/story/<title>/end', methods=["PUT"])
+def end_story(title):
 	db = MySQLdb.connect("mysql-server", "root", "secret", "mydb")
 	cursor = db.cursor()
+	cursor.execute("DELETE FROM stories WHERE title = %s", (title,))
+	db.commit()
+	db.close()
+
+	resp = Response(status=204, mimetype='application/json')
+	return resp
+
+# @app.route('/story/<title>/leave')
+
+
+def check_grammar_bot(text):
+	client = GrammarBotClient()
+	res = client.check(text, 'en-US')
+	if len(res.matches)==0:
+		return True
+	return False
