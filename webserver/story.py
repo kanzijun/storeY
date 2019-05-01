@@ -3,13 +3,9 @@ import json
 from grammarbot import GrammarBotClient
 import MySQLdb
 
-from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.scheduler import Scheduler
 
 app = Flask(__name__)
-
-sched = BackgroundScheduler(daemon=True)
-sched.add_job(time_out_user,'interval', minutes=10)
-sched.start()
 
 def time_out_user():
 	db = MySQLdb.connect("mysql-server", "root", "secret", "mydb")
@@ -32,7 +28,9 @@ def time_out_user():
 		db.commit()
 		db.close()	
 
-
+sched = Scheduler(daemon=True)
+sched.start()
+sched.add_interval_job(time_out_user, minutes=10)
 
 @app.route('/story/start', methods=["POST"])
 def start_story():
@@ -154,7 +152,7 @@ def end_story(title):
 	resp = Response(status=204, mimetype='application/json')
 	return resp
 
-@app.route('/story/<title>/leave', ["DELETE"])
+@app.route('/story/<title>/leave', methods=["DELETE"])
 def leave_story(title):
 
 	user_ip = request.remote_addr
