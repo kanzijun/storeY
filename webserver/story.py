@@ -36,25 +36,26 @@ def time_out_user():
 
 @app.route('/story/start', methods=["POST"])
 def start_story():
+
+	user_ip = request.remote_addr
+
 	if request.headers['Content-Type'] == 'application/json':
 		arguments = request.get_json()
 		title = arguments.get("title")
 		text = arguments.get("text")
-		current_user = arguments.get("current_user")
-		state = arguments.get("state")
 
 		if check_grammar_bot(text)==True:
 			db = MySQLdb.connect("mysql-server", "root", "secret", "mydb")
 			cursor = db.cursor()
-			cursor.execute("INSERT INTO stories VALUES (title, text, current_user, state);")
-			cursor.execute("INSERT INTO ip VALUES (title, user);")
+			cursor.execute("INSERT INTO stories VALUES (%s, %s, %s, 1);" (title, text, user_ip))
+			cursor.execute("INSERT INTO ip VALUES (%s, %s);" (title, user_ip))
 			db.commit()
 			db.close()
 
 			resp = Response(json.dumps({ "title": title }), status=201, mimetype='application/json')
 			return resp
 
-	resp = Response(json.dumps({ "Error in content." }), status=201, mimetype='application/json')
+	resp = Response(json.dumps({ "Error in content type." }), status=201, mimetype='application/json')
 	return resp
 	
 
