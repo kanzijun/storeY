@@ -19,7 +19,7 @@ def start_story():
 			db = MySQLdb.connect("mysql-server", "root", "secret", "mydb")
 			cursor = db.cursor()
 			cursor.execute("INSERT INTO stories VALUES (title, text, current_user, state);")
-			cursor.execute("INSERT INTO users VALUES (title, user);")
+			cursor.execute("INSERT INTO ip VALUES (title, user);")
 			db.commit()
 			db.close()
 
@@ -54,7 +54,7 @@ def display_story(title):
 
 	db = MySQLdb.connect("mysql-server", "root", "secret", "mydb")
 	cursor = db.cursor()
-	cursor.execute("SELECT * FROM stories WHERE title = %s", (title))
+	cursor.execute("SELECT * FROM stories WHERE title = %s", (title,))
 	rows = cursor.fetchone()
 	if (rows != None):
 		data = {"title": rows[0], "text": rows[1], "current_user": rows[2], "state": rows[3]}
@@ -67,9 +67,25 @@ def display_story(title):
 	return resp
 
 
-# @app.route('/story/<title>/edit')
+@app.route('/story/<title>/edit', methods=["PUT"])
+def edit_story(title):
 
-@app.route('/story/<title>/end', methods=["PUT"])
+	user_ip = request.remote_addr
+
+	db = MySQLdb.connect("mysql-server", "root", "secret", "mydb")
+	cursor = db.cursor()
+	cursor.execute("SELECT * FROM stories WHERE title = %s", (title,))
+	row = cursor.fetchone()
+	current_user = row[2]
+	#if user is new to story, add user to table ip
+	cursor.execute("INSERT INTO ip SELECT * FROM (SELECT %s, %s) AS tmp WHERE NOT EXISTS (SELECT * FROM ip WHERE title = %s and ip_addr = %s) LIMIT 1;", (title, user_ip, title, user_ip))
+	
+	cursor.execute("SELECT ip_addr FROM ip WHERE title = %s", (title,))
+	users = cursor.fetchall()
+
+
+
+@app.route('/story/<title>/end', methods=["DELETE"])
 def end_story(title):
 	db = MySQLdb.connect("mysql-server", "root", "secret", "mydb")
 	cursor = db.cursor()
