@@ -26,7 +26,7 @@ def time_out_user():
 		#update current user value to valid user
 		cursor.execute("UPDATE stories SET current_ip_addr = %s WHERE title = %s", (valid_user, row[0]))
 		db.commit()
-		db.close()	
+		db.close()
 
 sched = Scheduler(daemon=True)
 sched.start()
@@ -55,7 +55,7 @@ def start_story():
 
 	resp = Response(json.dumps({ "Error in content type." }), status=201, mimetype='application/json')
 	return resp
-	
+
 
 @app.route('/story/list', methods=["GET"])
 def list_stories_titles():
@@ -77,7 +77,7 @@ def list_stories_titles():
 
 @app.route('/story/<title>', methods=["GET"])
 def display_story(title):
-	
+
 
 	db = MySQLdb.connect("mysql-server", "root", "secret", "mydb")
 	cursor = db.cursor()
@@ -107,7 +107,7 @@ def edit_story(title):
 
 	#if user is new to story, add user to table ip
 	cursor.execute("INSERT INTO ip SELECT * FROM (SELECT %s, %s) AS tmp WHERE NOT EXISTS (SELECT * FROM ip WHERE title = %s and ip_addr = %s) LIMIT 1;", (title, user_ip, title, user_ip))
-	
+
 	#get list of users writing title
 	cursor.execute("SELECT ip_addr FROM ip WHERE title = %s", (title,))
 	users = cursor.fetchall()
@@ -173,5 +173,3 @@ def check_grammar_bot(text):
 	if len(res.matches)==0:
 		return True
 	return False
-
-
