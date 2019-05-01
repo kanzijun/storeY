@@ -142,18 +142,30 @@ def edit_story(title):
 	return resp
 
 
-@app.route('/story/<title>/end', methods=["DELETE"])
+@app.route('/story/<title>/end', methods=["PUT"])
 def end_story(title):
 	db = MySQLdb.connect("mysql-server", "root", "secret", "mydb")
 	cursor = db.cursor()
-	cursor.execute("DELETE FROM stories WHERE title = %s", (title,))
+	cursor.execute("UPDATE stories SET state = 0 WHERE title = %s", (title,))
 	db.commit()
 	db.close()
 
 	resp = Response(status=204, mimetype='application/json')
 	return resp
 
-# @app.route('/story/<title>/leave')
+@app.route('/story/<title>/leave', ["DELETE"])
+def leave_story(title):
+
+	user_ip = request.remote_addr
+
+	db = MySQLdb.connect("mysql-server", "root", "secret", "mydb")
+	cursor = db.cursor()
+	cursor.execute("DELETE FROM ip WHERE title = %s and ip_addr = %s;", (title, user_ip))
+	db.commit()
+	db.close()
+
+	resp = Response(status=204, mimetype='application/json')
+	return resp
 
 
 def check_grammar_bot(text):
