@@ -1,6 +1,4 @@
-<p align="center">
-
-** Storey **
+**Storey**
 Team members: Shireen Warrier, Zi Jun, Julia Park
 
 **Description of Project**
@@ -31,5 +29,3 @@ We are using Grammar Bot API to check the permissibility of the text the user en
 **Future Work:**
 We would like to consider implementing a front end interface for this. Although we started to, we realized we didn't really know yet how to do so. Also, we should probably consider implementing an asynchronous task queue to handle many users on it at any given time.
 
-
-</p>
