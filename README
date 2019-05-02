@@ -1,0 +1,30 @@
+**Storey**
+Team members: Shireen Warrier, Zi Jun, Julia Park
+
+**Description of Project**
+Storey is a collaborative storytelling environment where multiple users can write a story together by adding just a few words or sentences at a time. Each user takes turns contributing to a story, and has only a certain amount of time to do so. The end result should be a fun, creative, and/or chaotic story made by many people! On each turn, a person can edit a story or choose to “end” the story. Our project can have several stories stored on our server.
+
+**The database**
+The stories and text will be stored in a MySQL server/database created in a separate container via Docker. This database will hold a table called “Stories” which keeps track of name/content of stories, and a table called “IP” which keeps track of who has permission to edit which story.
+
+**Table Stories:** Title, Text, IP_Address
+**Table IP:** Title, User_IP
+
+We are using Grammar Bot API to check the permissibility of the text the user enters to make sure it is comprehensible English as well as a Scheduler API to keep track of how long a user is taking to enter a new sentence. Our data is mostly handled as JSON data.
+
+**Limitations:**
+1. Users only have a limited amount of time to enter something
+1. Stories can only be max 1000 characters
+1. Users can only take an action that affects the story if it is their turn
+
+**Functions:**
+1. def time_out_user(): Keeps track of how long a user is taking for their turn. If they take longer than 10 minutes, they time out.
+1. def start_story(): Starts a new story. Takes a title, text, and gets user IP Address as input. Stores it our database.
+1. def list_stories_titles(): Displays all stories available
+1. def display_story(title): Displays the content of a specific story
+1. def edit_story(title): Allows user to edit a specific story (takes new text as input) and updates text in database
+1. def leave_story(title): Allows user to leave a story.
+1. def check_grammar_bot(text): Checks grammar
+
+**Future Work:**
+We would like to consider implementing a front end interface for this. Although we started to, we realized we didn't really know yet how to do so. Also, we should probably consider implementing an asynchronous task queue to handle many users on it at any given time.
