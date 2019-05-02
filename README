@@ -14,17 +14,17 @@ We are using Grammar Bot API to check the permissibility of the text the user en
 
 **Limitations:**
 1. Users only have a limited amount of time to enter something
-1. Stories can only be max 1000 characters
-1. Users can only take an action that affects the story if it is their turn
+2. Stories can only be max 1000 characters
+3. Users can only take an action that affects the story if it is their turn
 
 **Functions:**
 1. def time_out_user(): Keeps track of how long a user is taking for their turn. If they take longer than 10 minutes, they time out.
-1. def start_story(): Starts a new story. Takes a title, text, and gets user IP Address as input. Stores it our database.
-1. def list_stories_titles(): Displays all stories available
-1. def display_story(title): Displays the content of a specific story
-1. def edit_story(title): Allows user to edit a specific story (takes new text as input) and updates text in database
-1. def leave_story(title): Allows user to leave a story.
-1. def check_grammar_bot(text): Checks grammar
+2. def start_story(): Starts a new story. Takes a title, text, and gets user IP Address as input. Stores it our database.
+3. def list_stories_titles(): Displays all stories available
+4. def display_story(title): Displays the content of a specific story
+5. def edit_story(title): Allows user to edit a specific story (takes new text as input) and updates text in database
+6. def leave_story(title): Allows user to leave a story.
+7. def check_grammar_bot(text): Checks grammar
 
 **Future Work:**
 We would like to consider implementing a front end interface for this. Although we started to, we realized we didn't really know yet how to do so. Also, we should probably consider implementing an asynchronous task queue to handle many users on it at any given time.
