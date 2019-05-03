@@ -50,21 +50,66 @@ header {
 </header>
 
 
+  <div>
+    <p>lkjsdflkjsdflkjsldkfjklsfjklsdjfklsjdflksjdflksjdflkjsfdlkjsdflk</p>
+      <style>
+    p { 
+    margin: 0 auto; 
+    width:300px;
+    }
+  </style>
+  </div>
+
+
 
 <form action="./list.html" method="post">
-  <h1>Create a new story</h1>
+  <h2>Add to this story</h2>
   <div>
-    <label for="title">Title of story</label>
-    <input name="title" value="Enter story name here">
-    <p></p>
+    <label for="text">What happens next?</label>
+    <p>-</p>
+    <p> </p>
+    <input name="text" value="Enter here">
+    <p> </p>
+    <p>-</p>
   </div>
   <div>
-    <label for="text">Add a sentence.</label>
-    <input name="text" value="Sentence here">
+    <button>Enter this</button>
+    <p></p>
     <p></p>
   </div>
+  <style>
+    form { 
+    margin: 0 auto; 
+    width:300px;
+    }
+  </style>
+
+</form>
+
+
+<form action="./list.html" method="put">
+  <h2>The end?</h2>
+
   <div>
-    <button>Start my story</button>
+    <button>Close story</button>
+    <p></p>
+    <p></p>
+  </div>
+
+  <style>
+    form { 
+    margin: 0 auto; 
+    width:300px;
+    }
+  </style>
+
+</form>
+
+
+<form action="./list.html" method="put">
+  <h2>Or see all stories</h2>
+  <div>
+    <button>See other stories</button>
     <p></p>
     <p></p>
   </div>
@@ -80,16 +125,8 @@ header {
 
 
 
-<div>
-  <h1>Or see stories</h1>
-  <button onclick="window.location.href='./list.html'">See all stories</button>
-  <style>
-  div { 
-  margin: 0 auto; 
-  width:300px;
-  }
-</style>
-</div>
+
+
 
 <script>
   var form;
