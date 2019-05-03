@@ -45,15 +45,19 @@ def start_story():
 		if check_grammar_bot(text)==True:
 			db = MySQLdb.connect("mysql-server", "root", "secret", "mydb")
 			cursor = db.cursor()
-			cursor.execute("INSERT INTO stories VALUES (%s, %s, %s, 1);" (title, text, user_ip))
-			cursor.execute("INSERT INTO ip VALUES (%s, %s);" (title, user_ip))
+			cursor.execute("INSERT INTO stories (title, text, current_ip_addr, state) VALUES (%s, %s, %s, %s)", (title, text, user_ip, 1))
+			cursor.execute("INSERT INTO ip (title, ip_addr) VALUES (%s, %s)", (title, user_ip))
 			db.commit()
 			db.close()
 
-			resp = Response(json.dumps({ "title": title }), status=201, mimetype='application/json')
+			data = {"title": title}
+
+			resp = Response(json.dumps(data), mimetype='application/json', status=201)
 			return resp
 
-	resp = Response(json.dumps({ "Error in content type." }), status=201, mimetype='application/json')
+	data = {"Error" : "Error in content type"}
+
+	resp = Response(json.dumps(data), status=201, mimetype='application/json')
 	return resp
 
 
