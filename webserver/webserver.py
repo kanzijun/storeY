@@ -174,6 +174,6 @@ def leave_story(title):
 def check_grammar_bot(text):
 	client = GrammarBotClient()
 	res = client.check(text, 'en-US')
-	if len(res.matches) < 2:
+	if len(res.matches) == 0:
 		return True
 	return False
