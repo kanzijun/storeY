@@ -85,7 +85,7 @@ def start_story():
 			db.commit()
 			db.close()
 
-			data = {"title": title}
+			data = {"title": title, "text": text}
 
 			sched.add_job(lambda: time_out_user(title), 'interval', minutes=1, id=title)
 
@@ -264,7 +264,7 @@ def end_story(title):
 
 	return resp
 
-@app.route('/story/leave/<title>', methods=["DELETE"])
+@app.route('/story/<title>/leave', methods=["DELETE"])
 def leave_story(title):
 	if request.headers['Content-Type'] == 'application/json':
 		arguments = request.get_json()
