@@ -3,42 +3,60 @@ import json
 from grammarbot import GrammarBotClient
 import MySQLdb
 
-from apscheduler.scheduler import Scheduler
+from apscheduler.schedulers.background import BackgroundScheduler
 
 app = Flask(__name__)
 
-def time_out_user():
+def time_out_user(title):
 	db = MySQLdb.connect("mysql-server", "root", "secret", "mydb")
 	cursor = db.cursor()
 
-	cursor.execute("SELECT * FROM stories;")
-	rows = cursor.fetchall()
-	for row in rows:
-		#get current user
-		cursor.execute("SELECT current_ip_addr FROM stories WHERE title = %s", (row[0],))
-		current_user = cursor.fetchone()
+	print("New user for " + title)
 
-		#get valid user
-		cursor.execute("SELECT ip_addr FROM ip WHERE title = %s and ip_addr > %s ORDER BY ip_addr LIMIT 1;", (row[0], current_user))
-		valid_user = cursor.fetchone()
+	query = "SELECT * FROM stories WHERE title = '{}';".format(title)
+	cursor.execute(query)
+	row = cursor.fetchone()
 
-		#update current user value to valid user
-		cursor.execute("UPDATE stories SET current_ip_addr = %s WHERE title = %s", (valid_user, row[0]))
-		db.commit()
-		db.close()
+	#get current user
+	cursor.execute("SELECT current_ip_addr FROM stories WHERE title = %s", (row[0],))
+	current_user = cursor.fetchone()[0]
 
-sched = Scheduler(daemon=True)
+	query = "SELECT id from ip WHERE title = '{}' AND ip_addr = '{}';".format(row[0], current_user)
+	cursor.execute(query)
+	current_id = cursor.fetchone()[0]
+
+	query = query = "SELECT ip_addr from ip WHERE title = '{}' AND id > {} ORDER BY id LIMIT 1;".format(row[0], current_id)
+	cursor.execute(query)
+	next_ip = cursor.fetchone()
+
+	if not next_ip:
+		query = "SELECT ip_addr from ip WHERE id = (SELECT MIN(id) from ip WHERE title = '{}')".format(row[0])
+		cursor.execute(query)
+		next_ip = cursor.fetchone()
+
+	query = "UPDATE stories SET current_ip_addr = '{}' WHERE title = '{}'".format(next_ip[0], row[0])
+	cursor.execute(query)
+
+	db.commit()
+	db.close()
+
+sched = BackgroundScheduler(daemon=True)
 sched.start()
-sched.add_interval_job(time_out_user, minutes=10)
 
 @app.route('/story/start', methods=["POST"])
 def start_story():
 
-	user_ip = request.environ["REMOTE_ADDR"]
-	#user_ip = request.remote_addr
+	"""
+	TODO
+
+
+
+	MAKE SURE YOU DON'T CREATE A STORY WITH AN EXISTING NAME
+	"""
 
 	if request.headers['Content-Type'] == 'application/json':
 		arguments = request.get_json()
+		user_ip = arguments.get("user")
 		title = arguments.get("title")
 		text = arguments.get("text")
 
@@ -51,6 +69,8 @@ def start_story():
 			db.close()
 
 			data = {"title": title}
+
+			sched.add_job(lambda: time_out_user(title), 'interval', minutes=1, id=title)
 
 			resp = Response(json.dumps(data), mimetype='application/json', status=201)
 			return resp
@@ -82,7 +102,6 @@ def list_stories_titles():
 @app.route('/story/<title>', methods=["GET"])
 def display_story(title):
 
-
 	db = MySQLdb.connect("mysql-server", "root", "secret", "mydb")
 	cursor = db.cursor()
 	cursor.execute("SELECT * FROM stories WHERE title = %s", (title,))
@@ -105,13 +124,17 @@ def edit_story(title):
 	db = MySQLdb.connect("mysql-server", "root", "secret", "mydb")
 	cursor = db.cursor()
 	cursor.execute("SELECT state FROM stories WHERE title = %s", (title,))
-	state = cursor.fetchone()
+	state = cursor.fetchone()[0]
 	if state == 0:
 		data = { "Error": "Story has ended." }
 		resp = Response(json.dumps(data), status=200, mimetype='application/json')
 		return resp
 
-	user_ip = request.remote_addr
+	if request.headers['Content-Type'] == 'application/json':
+		arguments = request.get_json()
+		user_ip = arguments.get("user")
+	else:
+		return "Must be json", 400
 
 	cursor.execute("SELECT * FROM stories WHERE title = %s", (title,))
 	row = cursor.fetchone()
@@ -121,12 +144,8 @@ def edit_story(title):
 	cursor.execute("SELECT COUNT(*) FROM ip WHERE title=%s", (title,))
 	row = cursor.fetchone()
 	user_count = row[0]
-	print("COUNT")
-	print(user_count)
 	if user_count == 1:
-		print("FIRST HELLO")
 		if user_ip == current_user:
-			print("SECOND HELLO")
 			db.close()
 			data = { "Error": "It is not your turn, waiting for more users to join the story." }
 			resp = Response(json.dumps(data), status=200, mimetype='application/json')
@@ -140,16 +159,6 @@ def edit_story(title):
 	#if user is new to story, add user to table ip
 	cursor.execute("INSERT INTO ip (title, ip_addr) SELECT %s, %s WHERE NOT EXISTS (SELECT 1 FROM ip WHERE title=%s and ip_addr=%s);", (title, user_ip, title, user_ip))
 	db.commit()
-	# cursor.execute("INSERT INTO ip (title, ip_addr) SELECT * FROM (SELECT %s, %s) AS tmp WHERE NOT EXISTS (SELECT * FROM ip WHERE title = %s and ip_addr = %s) LIMIT 1;", (title, user_ip, title, user_ip))
-
-	# #get list of users writing title
-	# cursor.execute("SELECT ip_addr FROM ip WHERE title = %s", (title,))
-	# users = cursor.fetchall()
-
-	# #get valid user
-	# cursor.execute("SELECT ip_addr FROM stories WHERE title = %s and ip_addr > %s ORDER BY ip_addr LIMIT 1;", (title, current_user))
-	# cursor.execute("SELECT ip_addr FROM ip  WHERE title = %s and ip_addr > %s ORDER BY ip_addr LIMIT 1;", (title, current_user))
-	# valid_user = cursor.fetchone()
 
 	#get updated current_user
 	cursor.execute("SELECT * FROM stories WHERE title = %s", (title,))
@@ -157,25 +166,22 @@ def edit_story(title):
 	current_user = row[2]
 
 	if user_ip == current_user:
+		# if request.headers['Content-Type'] == 'application/json':
+		new_text = arguments.get("new_text")
 
-		if request.headers['Content-Type'] == 'application/json':
-			arguments = request.get_json()
-			new_text = arguments.get("new_text")
+		if check_grammar_bot(new_text)==True:
+			db = MySQLdb.connect("mysql-server", "root", "secret", "mydb")
+			cursor = db.cursor()
+			cursor.execute("SELECT text FROM stories WHERE title = %s;", (title,))
+			text_row = cursor.fetchone()
+			old_text = text_row[0]
+			updated_text = old_text + " " + new_text
+			cursor.execute("UPDATE stories SET text = %s WHERE title = %s;", (updated_text, title))
+			db.commit()
+			db.close()
 
-			if check_grammar_bot(new_text)==True:
-
-				db = MySQLdb.connect("mysql-server", "root", "secret", "mydb")
-				cursor = db.cursor()
-				cursor.execute("SELECT text FROM stories WHERE title = %s;", (title,))
-				text_row = cursor.fetchone()
-				old_text = text_row[0]
-				updated_text = old_text + new_text
-				cursor.execute("UPDATE stories SET text = %s WHERE title = %s;", (updated_text, title))
-				db.commit()
-				db.close()
-
-				resp = Response(status=204, mimetype='application/json')
-				return resp
+			resp = Response(status=204, mimetype='application/json')
+			return resp
 
 	data = { "Error": "It is not your turn." }
 	resp = Response(json.dumps(data), status=200, mimetype='application/json')
@@ -183,7 +189,6 @@ def edit_story(title):
 
 @app.route('/story/<title>/users', methods=["GET"])
 def get_users(title):
-
 	users = []
 
 	db = MySQLdb.connect("mysql-server", "root", "secret", "mydb")
@@ -214,13 +219,17 @@ def end_story(title):
 	db.commit()
 	db.close()
 
+	#stop scheduler from running for this story
+	sched.remove_job(title)
+
 	resp = Response(status=204, mimetype='application/json')
 	return resp
 
 @app.route('/story/leave/<title>', methods=["DELETE"])
 def leave_story(title):
-
-	user_ip = request.remote_addr
+	if request.headers['Content-Type'] == 'application/json':
+		arguments = request.get_json()
+		user_ip = arguments.get("user")
 
 	db = MySQLdb.connect("mysql-server", "root", "secret", "mydb")
 	cursor = db.cursor()
@@ -241,9 +250,14 @@ def leave_story(title):
 		cursor.execute(query)
 		current_id = cursor.fetchone()[0]
 
-		query = "SELECT ip_addr from ip WHERE id > {} ORDER BY id LIMIT 1;".format(current_id)
+		query = "SELECT ip_addr from ip WHERE title = '{}' AND id > {} ORDER BY id LIMIT 1;".format(title, current_id)
 		cursor.execute(query)
 		next_ip = cursor.fetchone()[0]
+
+		if not next_ip:
+			query = "SELECT ip_addr from ip WHERE title = '{}' AND id = min(id)".format(title)
+			cursor.execute(query)
+			next_ip = cursor.fetchone()[0]
 
 		query = "UPDATE stories SET current_ip_addr = '{}' WHERE title = '{}'".format(next_ip, title)
 		cursor.execute(query)
@@ -252,6 +266,9 @@ def leave_story(title):
 		query = "UPDATE stories SET state = 0 WHERE title = '{}';".format(title)
 		cursor.execute(query)
 		db.commit()
+
+		#stop scheduler from running for this story
+		sched.remove_job(title)
 
 	#delete the user from the ip table
 	query = "DELETE FROM ip WHERE title = '{}' and ip_addr = '{}';".format(title, user_ip)
