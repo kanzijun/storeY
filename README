@@ -4,11 +4,14 @@ Team members: Shireen Warrier, Zi Jun, Julia Park
 **Description of Project**
 Storey is a collaborative storytelling environment where multiple users can write a story together by adding just a few words or sentences at a time. Each user takes turns contributing to a story, and has only a certain amount of time to do so. The end result should be a fun, creative, and/or chaotic story made by many people! On each turn, a person can edit a story or choose to “end” the story. Our project can have several stories stored on our server.
 
+**Inspiration**
+The inspiration behind this was Twitch Plays Pokemon, where Twitch users could stream into an interactive channel where users could control the same character by typing into the group chat. Another reference is Reddit’s AskOuija subreddit where users can post a question to the subreddit and other users can comment one letter at time to collaboratively construct an answer.
+
 **The database**
 The stories and text will be stored in a MySQL server/database created in a separate container via Docker. This database will hold a table called “Stories” which keeps track of name/content of stories, and a table called “IP” which keeps track of who has permission to edit which story.
 
-**Table Stories:** Title, Text, IP_Address
-**Table IP:** Title, User_IP
+**Table Stories:** Title, Text, Current_IP_Address, State (whether the story is open and able to be edited or closed)
+**Table IP:** ID, Title, User_IP
 
 We are using Grammar Bot API to check the permissibility of the text the user enters to make sure it is comprehensible English as well as a Scheduler API to keep track of how long a user is taking to enter a new sentence. Our data is mostly handled as JSON data.
 
@@ -18,7 +21,7 @@ We are using Grammar Bot API to check the permissibility of the text the user en
 3. Users can only take an action that affects the story if it is their turn
 
 **Functions:**
-1. def time_out_user(): Keeps track of how long a user is taking for their turn. If they take longer than 10 minutes, they time out.
+1. def time_out_user(): Keeps track of how long a user is taking for their turn. If they take longer than "x" minutes, they time out and the next person gets a turn.
 2. def start_story(): Starts a new story. Takes a title, text, and gets user IP Address as input. Stores it our database.
 3. def list_stories_titles(): Displays all stories available
 4. def display_story(title): Displays the content of a specific story
