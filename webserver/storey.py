@@ -214,12 +214,6 @@ def end_story(title):
 
 	user_ip = request.remote_addr
 
-
-	cursor.execute("SELECT * FROM stories WHERE title = %s", (title,))
-	row = cursor.fetchone()
-	current_user = row[2]
-
-
 	#get updated current_user
 	cursor.execute("SELECT * FROM stories WHERE title = %s", (title,))
 	row = cursor.fetchone()
