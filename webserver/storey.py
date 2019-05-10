@@ -7,18 +7,33 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 app = Flask(__name__)
 
+#start the scheduler
+sched = BackgroundScheduler(daemon=True)
+sched.start()
+
+#add a job in the scheduler for each story that exists and is open (state 0)
+db = MySQLdb.connect("mysql-server", "root", "secret", "mydb")
+cursor = db.cursor()
+
+cursor.execute("SELECT * FROM stories WHERE state = 1;")
+stories = cursor.fetchall()
+
+for story in stories:
+	title = story[0]
+	sched.add_job(lambda: time_out_user(title), 'interval', minutes=1, id=title)
+
+db.close()
+
 def time_out_user(title):
 	db = MySQLdb.connect("mysql-server", "root", "secret", "mydb")
 	cursor = db.cursor()
-
-	print("New user for " + title)
 
 	query = "SELECT * FROM stories WHERE title = '{}';".format(title)
 	cursor.execute(query)
 	row = cursor.fetchone()
 
 	#get current user
-	cursor.execute("SELECT current_ip_addr FROM stories WHERE title = %s", (row[0],))
+	cursor.execute("SELECT current_ip_addr FROM stories WHERE title = %s;", (row[0],))
 	current_user = cursor.fetchone()[0]
 
 	query = "SELECT id from ip WHERE title = '{}' AND ip_addr = '{}';".format(row[0], current_user)
@@ -30,30 +45,20 @@ def time_out_user(title):
 	next_ip = cursor.fetchone()
 
 	if not next_ip:
-		query = "SELECT ip_addr from ip WHERE id = (SELECT MIN(id) from ip WHERE title = '{}')".format(row[0])
+		query = "SELECT ip_addr from ip WHERE id = (SELECT MIN(id) from ip WHERE title = '{}');".format(row[0])
 		cursor.execute(query)
 		next_ip = cursor.fetchone()
 
-	query = "UPDATE stories SET current_ip_addr = '{}' WHERE title = '{}'".format(next_ip[0], row[0])
+	query = "UPDATE stories SET current_ip_addr = '{}' WHERE title = '{}';".format(next_ip[0], row[0])
 	cursor.execute(query)
+
+	print(next_ip[0] + " it's your turn for story " + title + "! Hurry you have 60 seconds!")
 
 	db.commit()
 	db.close()
 
-sched = BackgroundScheduler(daemon=True)
-sched.start()
-
 @app.route('/story/start', methods=["POST"])
 def start_story():
-
-	"""
-	TODO
-
-
-
-	MAKE SURE YOU DON'T CREATE A STORY WITH AN EXISTING NAME
-	"""
-
 	if request.headers['Content-Type'] == 'application/json':
 		arguments = request.get_json()
 		user_ip = arguments.get("user")
@@ -63,6 +68,18 @@ def start_story():
 		if check_grammar_bot(text)==True:
 			db = MySQLdb.connect("mysql-server", "root", "secret", "mydb")
 			cursor = db.cursor()
+
+			#make sure the story title is unique
+			query = "SELECT * from stories WHERE title = '{}';".format(title)
+			cursor.execute(query)
+			result = cursor.fetchone()
+
+			#if there is already a story with this name, don't create the story
+			if result:
+				data = {"Error" : "Please enter a unique story title!"}
+				resp = Response(json.dumps(data), mimetype='application/json', status=201)
+				return resp
+
 			cursor.execute("INSERT INTO stories (title, text, current_ip_addr, state) VALUES (%s, %s, %s, %s)", (title, text, user_ip, 1))
 			cursor.execute("INSERT INTO ip (title, ip_addr) VALUES (%s, %s)", (title, user_ip))
 			db.commit()
@@ -213,6 +230,9 @@ def end_story(title):
 	else:
 		return "Must be json", 400
 
+	db = MySQLdb.connect("mysql-server", "root", "secret", "mydb")
+	cursor = db.cursor()
+
 	#get updated current_user
 	cursor.execute("SELECT * FROM stories WHERE title = %s", (title,))
 	row = cursor.fetchone()
@@ -220,9 +240,6 @@ def end_story(title):
 
 	#if it is the current user's turn they can end the story, otherwise send an error
 	if user_ip == current_user:
-		db = MySQLdb.connect("mysql-server", "root", "secret", "mydb")
-		cursor = db.cursor()
-
 		#if state of story is 0, story is already ended
 		cursor.execute("SELECT state FROM stories WHERE title = %s", (title,))
 		state = cursor.fetchone()[0]
@@ -296,6 +313,8 @@ def leave_story(title):
 	query = "DELETE FROM ip WHERE title = '{}' and ip_addr = '{}';".format(title, user_ip)
 	cursor.execute(query)
 	db.commit()
+
+	print(user_ip + " has left the story " + title)
 
 	db.close()
 
