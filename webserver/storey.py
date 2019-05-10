@@ -202,19 +202,43 @@ def get_users(title):
 
 @app.route('/story/<title>/end', methods=["PUT"])
 def end_story(title):
-	"""
-	TODO !!!
-
-	ONLY BE ABLE TO END THE STORY IF YOU ARE THE CURRENT USER??????
-	"""
-
+	#if state of story is 0, story is already ended
 	db = MySQLdb.connect("mysql-server", "root", "secret", "mydb")
 	cursor = db.cursor()
-	cursor.execute("UPDATE stories SET state = 0 WHERE title = %s", (title,))
-	db.commit()
-	db.close()
+	cursor.execute("SELECT state FROM stories WHERE title = %s", (title,))
+	state = cursor.fetchone()
+	if state == 0:
+		data = { "Error": "Story has already ended." }
+		resp = Response(json.dumps(data), status=200, mimetype='application/json')
+		return resp
 
-	resp = Response(status=204, mimetype='application/json')
+	user_ip = request.remote_addr
+
+
+	cursor.execute("SELECT * FROM stories WHERE title = %s", (title,))
+	row = cursor.fetchone()
+	current_user = row[2]
+
+
+	#get updated current_user
+	cursor.execute("SELECT * FROM stories WHERE title = %s", (title,))
+	row = cursor.fetchone()
+	current_user = row[2]
+
+	if user_ip == current_user:
+
+
+		db = MySQLdb.connect("mysql-server", "root", "secret", "mydb")
+		cursor = db.cursor()
+		cursor.execute("UPDATE stories SET state = 0 WHERE title = %s", (title,))
+		db.commit()
+		db.close()
+
+		resp = Response(status=204, mimetype='application/json')
+		return resp
+
+	data = { "Error": "It is not your turn." }
+	resp = Response(json.dumps(data), status=200, mimetype='application/json')
 	return resp
 
 @app.route('/story/leave/<title>', methods=["DELETE"])
