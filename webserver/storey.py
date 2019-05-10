@@ -91,6 +91,8 @@ def start_story():
 
 			resp = Response(json.dumps(data), mimetype='application/json', status=201)
 			return resp
+		else:
+			return {"Error" : "Bad grammar!"}
 
 	data = {"Error" : "Error in content type"}
 
@@ -171,7 +173,10 @@ def edit_story(title):
 			#if there's only one user, and its a new user joining, make new user the current user
 			cursor.execute("INSERT INTO ip (title, ip_addr) VALUES (%s, %s)", (title, user_ip)) #add new_user to ip table
 			cursor.execute("UPDATE stories SET current_ip_addr = %s WHERE title = %s", (user_ip, title)) #change current_user to new_user
+
 			db.commit()
+
+			print(user_ip + " it's your turn for story " + title + "! Hurry you have 60 seconds!")
 
 	#if user is new to story, add user to table ip
 	cursor.execute("INSERT INTO ip (title, ip_addr) SELECT %s, %s WHERE NOT EXISTS (SELECT 1 FROM ip WHERE title=%s and ip_addr=%s);", (title, user_ip, title, user_ip))
@@ -183,7 +188,6 @@ def edit_story(title):
 	current_user = row[2]
 
 	if user_ip == current_user:
-		# if request.headers['Content-Type'] == 'application/json':
 		new_text = arguments.get("new_text")
 
 		if check_grammar_bot(new_text)==True:
@@ -199,6 +203,8 @@ def edit_story(title):
 
 			resp = Response(status=204, mimetype='application/json')
 			return resp
+		else:
+			return {"Error": "Bad grammar!"}
 
 	data = { "Error": "It is not your turn." }
 	resp = Response(json.dumps(data), status=200, mimetype='application/json')
