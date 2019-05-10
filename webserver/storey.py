@@ -11,7 +11,6 @@ def time_out_user():
 	db = MySQLdb.connect("mysql-server", "root", "secret", "mydb")
 	cursor = db.cursor()
 
-	# current_user = row[2]
 	cursor.execute("SELECT * FROM stories;")
 	rows = cursor.fetchall()
 	for row in rows:
@@ -35,7 +34,8 @@ sched.add_interval_job(time_out_user, minutes=10)
 @app.route('/story/start', methods=["POST"])
 def start_story():
 
-	user_ip = request.remote_addr
+	user_ip = request.environ["REMOTE_ADDR"]
+	#user_ip = request.remote_addr
 
 	if request.headers['Content-Type'] == 'application/json':
 		arguments = request.get_json()
@@ -121,8 +121,12 @@ def edit_story(title):
 	cursor.execute("SELECT COUNT(*) FROM ip WHERE title=%s", (title,))
 	row = cursor.fetchone()
 	user_count = row[0]
+	print("COUNT")
+	print(user_count)
 	if user_count == 1:
+		print("FIRST HELLO")
 		if user_ip == current_user:
+			print("SECOND HELLO")
 			db.close()
 			data = { "Error": "It is not your turn, waiting for more users to join the story." }
 			resp = Response(json.dumps(data), status=200, mimetype='application/json')
@@ -195,8 +199,15 @@ def get_users(title):
 	resp = Response(json.dumps(data), status=200, mimetype='application/json')
 	return resp
 
+
 @app.route('/story/<title>/end', methods=["PUT"])
 def end_story(title):
+	"""
+	TODO !!!
+
+	ONLY BE ABLE TO END THE STORY IF YOU ARE THE CURRENT USER??????
+	"""
+
 	db = MySQLdb.connect("mysql-server", "root", "secret", "mydb")
 	cursor = db.cursor()
 	cursor.execute("UPDATE stories SET state = 0 WHERE title = %s", (title,))
